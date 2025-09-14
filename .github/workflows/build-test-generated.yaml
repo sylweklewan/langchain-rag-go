@@ -1,41 +1,44 @@
-name: CI
+name: Go CI
 
-# Trigger on pushes to main and on pull‑request events
 on:
   push:
     branches: [main]
   pull_request:
 
 jobs:
-  build:
+  build-and-test:
     runs-on: ubuntu-latest
-    # Use the same Go image that Jenkins used
-    container:
-      image: golang:1.25
-      # The container runs as root by default – no need for `-u root`
-
     steps:
-      # 1️⃣ Checkout the repo
-      - uses: actions/checkout@v4
+      # 1️⃣ Checkout the repository
+      - name: Checkout source
+        uses: actions/checkout@v4
 
-      # 2️⃣ Format check (go fmt) – same as the Jenkins “Format” stage
+      # 2️⃣ (Optional) Install Go – the composite actions may already do this,
+      #     but adding it here guarantees the correct version is available.
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod   # automatically picks the version from go.mod
+          cache: true
+
+      # 3️⃣ Format step – same logic as the Jenkins stage
       - name: Format (go fmt)
+        shell: bash
         run: |
           go fmt ./...
-          # Capture any files that were reformatted
           git diff --name-only > formatted-files.txt || true
 
-      # 3️⃣ Upload the list of formatted files (if any)
-      - uses: actions/upload-artifact@v4
+      # 4️⃣ Upload the list of formatted files (if any)
+      - name: Upload formatted files
+        uses: actions/upload-artifact@v4
         with:
           name: formatted-files
           path: formatted-files.txt
 
-      # 4️⃣ Build the project – the composite action already builds
-      #     and uploads the binary, so we just invoke it.
-      - name: Go Build
+      # 5️⃣ Build – delegate to the reusable composite action
+      - name: Build Go project
         uses: ./.github/actions/go-build
 
-      # 5️⃣ Run tests – the composite action runs `go test -v ./...`
-      - name: Go Test
+      # 6️⃣ Test – delegate to the reusable composite action
+      - name: Run Go tests
         uses: ./.github/actions/go-test
