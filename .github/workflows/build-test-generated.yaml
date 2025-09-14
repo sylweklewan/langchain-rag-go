@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     # Use the same Go image that Jenkins used
     container:
-      image: golang:1.22
+      image: golang:1.25
       # The container runs as root by default – no need for `-u root`
 
     steps:
