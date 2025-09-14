@@ -8,7 +8,7 @@ runs:
       shell: bash
       run: |
         mkdir -p build
-        go -buildvcs=false build -o build/app ./... 
+        go build -buildvcs=false -o build/app ./... 
 
     - name: Upload binary
       uses: actions/upload-artifact@v4
