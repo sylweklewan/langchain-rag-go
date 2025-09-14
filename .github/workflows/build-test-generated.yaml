@@ -28,7 +28,7 @@ jobs:
 
     - name: Archive formatted files
       if: steps.fmt.outputs.files != ''
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v4
       with:
         name: formatted-files
         path: formatted-files.txt
@@ -40,7 +40,7 @@ jobs:
       uses: ./.github/actions/go-test
 
     - name: Upload build artifact
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v4
       with:
         name: go-binary
         path: build/app
