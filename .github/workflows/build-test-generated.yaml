@@ -1,0 +1,46 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Set up Go
+      uses: actions/setup-go@v2
+      with:
+        go-version: 1.22
+
+    - name: Run Go fmt
+      run: |
+        go fmt ./...
+        git diff --name-only > formatted-files.txt || true
+        echo "::set-output name=files::$(cat formatted-files.txt)"
+      id: fmt
+
+    - name: Archive formatted files
+      if: steps.fmt.outputs.files != ''
+      uses: actions/upload-artifact@v2
+      with:
+        name: formatted-files
+        path: formatted-files.txt
+
+    - name: Go Build
+      uses: ./.github/actions/go-build
+
+    - name: Go Test
+      uses: ./.github/actions/go-test
+
+    - name: Upload build artifact
+      uses: actions/upload-artifact@v2
+      with:
+        name: go-binary
+        path: build/app
