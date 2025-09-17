@@ -28,7 +28,7 @@ jobs:
           go fmt ./...
           git diff --name-only > formatted-files.txt || true
 
-      # 4️⃣ Upload the list of formatted files (if any)
+      # 4️⃣ Upload the list of formatted files (if any are there)
       - name: Upload formatted files
         uses: actions/upload-artifact@v4
         with:
