@@ -1,20 +1,5 @@
-# .github/workflows/build-format-test.yml
-# ------------------------------------------------------------
-#  Build, Format and Test
-#
-#  This workflow mirrors the Jenkins pipeline:
-#    1. Checkout the repo
-#    2. Run `go fmt` (Go Fmt action)
-#    3. Build the Go binary (Go Build action)
-#    4. Run Go tests (Go Test action)
-#
-#  The composite actions already upload the artifacts
-#  (formatted‑files.txt and build/app), so the workflow
-#  does not need to archive them again.
-#
-#  Triggered on pushes and pull‑requests to the main branch.
-# ------------------------------------------------------------
-name: Build, Format and Test
+
+name: Build, Format and Test 23
 
 on:
   push:
