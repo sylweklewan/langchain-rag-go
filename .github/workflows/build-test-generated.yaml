@@ -1,38 +1,61 @@
+# .github/workflows/build-format-test.yml
+name: Build, Format and Test
 
-name: Build, Format and Test 23
-
+# Trigger on pushes and PRs to the main branch
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
   ci:
     runs-on: ubuntu-latest
-    # Default permissions are sufficient for the actions used.
-    # (actions: write, contents: read, etc.)
     steps:
+      # --------------------------------------------------------------------
+      # 1️⃣  Checkout the repository
+      # --------------------------------------------------------------------
       - name: Checkout repository
         uses: actions/checkout@v4
-        # This step pulls the source code into the runner.
 
-      - name: Set up Go
+      # --------------------------------------------------------------------
+      # 2️⃣  Install Go (the composite actions don't do this for us)
+      # --------------------------------------------------------------------
+      - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          # Uses the Go version specified in go.mod
+          # Pick the Go version that matches the go.mod file
           go-version-file: go.mod
           cache: true
-        # Installing Go is required before any Go‑specific composite action.
 
+      # --------------------------------------------------------------------
+      # 3️⃣  Format the Go code (go fmt) – composite action
+      # --------------------------------------------------------------------
       - name: Format Go code
         uses: ./.github/actions/go-fmt
-        # Runs `go fmt ./...` and uploads formatted‑files.txt.
+        # The action automatically uploads `formatted-files.txt` as an artifact
 
+      # --------------------------------------------------------------------
+      # 4️⃣  Build the Go binary – composite action
+      # --------------------------------------------------------------------
       - name: Build Go binary
         uses: ./.github/actions/go-build
-        # Builds the binary into `build/app` and uploads it as an artifact.
+        # The action automatically uploads the binary as `go-binary`
 
+      # --------------------------------------------------------------------
+      # 5️⃣  Run Go tests – composite action
+      # --------------------------------------------------------------------
       - name: Run Go tests
         uses: ./.github/actions/go-test
-        # Executes `go test -v ./...` and uploads the test results.
+        # The action just runs `go test -v ./...`
+
+# --------------------------------------------------------------------
+# Notes
+# --------------------------------------------------------------------
+# • The composite actions are expected to live in
+#   .github/actions/go-fmt, .github/actions/go-build, and
+#   .github/actions/go-test respectively.
+# • All artifacts are uploaded by the composite actions themselves,
+#   so we do not need any extra upload steps here.
+# • Using the latest stable versions of the standard actions
+#   (checkout@v4, setup-go@v5, upload-artifact@v4 inside the composites).
