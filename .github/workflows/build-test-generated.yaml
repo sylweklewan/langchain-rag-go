@@ -1,61 +1,62 @@
 # .github/workflows/build-format-test.yml
+# ------------------------------------------------------------
+# Workflow name: Build, Format and Test
+# ------------------------------------------------------------
+# This workflow reproduces the Jenkins pipeline stages:
+#   1. Checkout
+#   2. Format (go fmt) – creates `formatted‑files.txt` and uploads it
+#   3. Build – uses the reusable “Go Build” composite action
+#   4. Test – uses the reusable “Go Test” composite action
+#
+# The reusable actions are assumed to live in the repository under
+#   .github/actions/go-build
+#   .github/actions/go-test
+#
+# Standard actions are pinned to their latest major releases.
+# ------------------------------------------------------------
 name: Build, Format and Test
 
-# Trigger on pushes and PRs to the main branch
 on:
   push:
-    branches: [main]
+    branches: [ main ]
   pull_request:
-    branches: [main]
+    branches: [ main ]
 
 jobs:
-  ci:
+  build:
     runs-on: ubuntu-latest
     steps:
-      # --------------------------------------------------------------------
-      # 1️⃣  Checkout the repository
-      # --------------------------------------------------------------------
+      # 1️⃣ Checkout the repository
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # --------------------------------------------------------------------
-      # 2️⃣  Install Go (the composite actions don't do this for us)
-      # --------------------------------------------------------------------
-      - name: Setup Go
+      # 2️⃣ Set up Go (uses go.mod to pick the version)
+      - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          # Pick the Go version that matches the go.mod file
           go-version-file: go.mod
-          cache: true
+          cache-dependency-path: go.sum
 
-      # --------------------------------------------------------------------
-      # 3️⃣  Format the Go code (go fmt) – composite action
-      # --------------------------------------------------------------------
+      # 3️⃣ Format Go code and capture the list of formatted files
       - name: Format Go code
-        uses: ./.github/actions/go-fmt
-        # The action automatically uploads `formatted-files.txt` as an artifact
+        shell: bash
+        run: |
+          go fmt ./...
+          # Capture the diff into a file – ignore errors if nothing changed
+          git diff --name-only > formatted-files.txt || true
 
-      # --------------------------------------------------------------------
-      # 4️⃣  Build the Go binary – composite action
-      # --------------------------------------------------------------------
-      - name: Build Go binary
+      # 4️⃣ Upload the formatted‑files.txt artifact (only if it exists)
+      - name: Upload formatted files artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: formatted-files
+          path: formatted-files.txt
+          if-no-files-found: ignore
+
+      # 5️⃣ Build the Go project – this uses the reusable composite action
+      - name: Build Go project
         uses: ./.github/actions/go-build
-        # The action automatically uploads the binary as `go-binary`
 
-      # --------------------------------------------------------------------
-      # 5️⃣  Run Go tests – composite action
-      # --------------------------------------------------------------------
+      # 6️⃣ Run Go tests – this uses the reusable composite action
       - name: Run Go tests
         uses: ./.github/actions/go-test
-        # The action just runs `go test -v ./...`
-
-# --------------------------------------------------------------------
-# Notes
-# --------------------------------------------------------------------
-# • The composite actions are expected to live in
-#   .github/actions/go-fmt, .github/actions/go-build, and
-#   .github/actions/go-test respectively.
-# • All artifacts are uploaded by the composite actions themselves,
-#   so we do not need any extra upload steps here.
-# • Using the latest stable versions of the standard actions
-#   (checkout@v4, setup-go@v5, upload-artifact@v4 inside the composites).
