@@ -1,47 +1,53 @@
 # .github/workflows/build-format-test.yml
-# ----------------------------------------------------
-# Build, Format and Test
-# This workflow mirrors the Jenkins pipeline:
-#   1. Checkout the repo
-#   2. Format Go code (go fmt)
-#   3. Build the Go binary
-#   4. Run Go tests
+# ------------------------------------------------------------
+#  Build, Format and Test
 #
-# It re‑uses the composite actions defined in the repository
-# (go-fmt, go-build, go-test) so that the individual steps
-# are not duplicated here.
-# ----------------------------------------------------
+#  This workflow mirrors the Jenkins pipeline:
+#    1. Checkout the repo
+#    2. Run `go fmt` (Go Fmt action)
+#    3. Build the Go binary (Go Build action)
+#    4. Run Go tests (Go Test action)
+#
+#  The composite actions already upload the artifacts
+#  (formatted‑files.txt and build/app), so the workflow
+#  does not need to archive them again.
+#
+#  Triggered on pushes and pull‑requests to the main branch.
+# ------------------------------------------------------------
 name: Build, Format and Test
 
 on:
   push:
-    branches: [main]
+    branches: [ main ]
   pull_request:
+    branches: [ main ]
 
 jobs:
-  build:
+  ci:
     runs-on: ubuntu-latest
+    # Default permissions are sufficient for the actions used.
+    # (actions: write, contents: read, etc.)
     steps:
-      # 1️⃣ Checkout the repository
       - name: Checkout repository
         uses: actions/checkout@v4
+        # This step pulls the source code into the runner.
 
-      # 2️⃣ Set up Go (needed by the composite actions)
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          # Use the Go version specified in go.mod
+          # Uses the Go version specified in go.mod
           go-version-file: go.mod
-          cache-dependency-path: go.sum
+          cache: true
+        # Installing Go is required before any Go‑specific composite action.
 
-      # 3️⃣ Format Go code – uploads `formatted-files.txt`
       - name: Format Go code
         uses: ./.github/actions/go-fmt
+        # Runs `go fmt ./...` and uploads formatted‑files.txt.
 
-      # 4️⃣ Build the Go binary – uploads `build/app`
-      - name: Build Go project
+      - name: Build Go binary
         uses: ./.github/actions/go-build
+        # Builds the binary into `build/app` and uploads it as an artifact.
 
-      # 5️⃣ Run Go tests – prints output to the log
-      - name: Test Go project
+      - name: Run Go tests
         uses: ./.github/actions/go-test
+        # Executes `go test -v ./...` and uploads the test results.
